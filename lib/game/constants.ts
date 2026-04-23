@@ -124,7 +124,7 @@ export const COLORS = {
   // Plataformas — waffle/biscoito
   platformGlow: "#D4956B", // Cor de biscoito
   // Projéteis
-  bulletPlayer: "#FFB347", // Bombom dourado
+  bulletPlayer: "#E8117F", // Framboesa intenso — contrasta com fundo rosa pastel e casinhas caramelo
   bulletEnemy: "#7FBE5C", // Verde
   // Coletáveis
   healthPickup: "#FF8FB8", // Cupcake rosa

@@ -21,6 +21,23 @@ export default function GameCanvas({
   const animFrameRef = useRef<number>(0);
   const lastScreenRef = useRef<GameState["screen"]>("menu");
 
+  // Atualiza coordenadas do mouse em coords do mundo (canvas lógico + câmera)
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CANVAS_WIDTH / rect.width;
+      const scaleY = CANVAS_HEIGHT / rect.height;
+      const screenX = (e.clientX - rect.left) * scaleX;
+      const screenY = (e.clientY - rect.top) * scaleY;
+      const cam = gameState.current.camera;
+      inputState.current.mouseWorldX = screenX + cam.x;
+      inputState.current.mouseWorldY = screenY + cam.y;
+    },
+    [gameState, inputState],
+  );
+
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -63,6 +80,7 @@ export default function GameCanvas({
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
       className="block"
+      onMouseMove={handleMouseMove}
       style={{
         imageRendering: "pixelated",
         width: "100%",

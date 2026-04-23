@@ -91,11 +91,13 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   }
 
   // Zone transition overlay
-  if (state.zoneTransitionTimer > 0) {
+  if (state.zoneTransitionTimer > 0 || state.zoneAnnouncePending) {
     renderZoneTransition(
       ctx,
       state.zoneTransitionName,
       state.zoneTransitionTimer,
+      state.zoneAnnouncePending,
+      state.time,
     );
   }
 
@@ -1201,29 +1203,47 @@ function renderProjectile(
   const py = proj.y - camY;
 
   if (isPlayer) {
-    // Projétil do player: bombom embrulhado (~O~)
+    // Projétil do player: bombom framboesa embrulhado (~O~) com contorno escuro
     const bx = px + proj.width / 2;
     const by = py + proj.height / 2;
+    const coreR = proj.height * 0.85;
+    const tipR = proj.height * 0.45;
 
-    ctx.fillStyle = COLORS.bulletPlayer;
+    // Halo externo para visibilidade sobre fundos claros
     ctx.shadowColor = COLORS.bulletPlayer;
-    ctx.shadowBlur = 6;
-    // Corpo redondo
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = "#FFFFFF";
     ctx.beginPath();
-    ctx.arc(bx, by, proj.height * 0.7, 0, Math.PI * 2);
+    ctx.arc(bx, by, coreR + 1.5, 0, Math.PI * 2);
     ctx.fill();
-    // Pontinhas laterais (embrulho)
-    ctx.fillStyle = "#FFC060";
+    ctx.shadowBlur = 0;
+
+    // Corpo principal (framboesa)
+    ctx.fillStyle = COLORS.bulletPlayer;
     ctx.beginPath();
-    ctx.arc(bx - proj.width * 0.45, by, proj.height * 0.35, 0, Math.PI * 2);
+    ctx.arc(bx, by, coreR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pontinhas laterais do embrulho (rosa mais claro)
+    ctx.fillStyle = "#FF5FA8";
+    ctx.beginPath();
+    ctx.arc(bx - proj.width * 0.45, by, tipR, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(bx + proj.width * 0.45, by, proj.height * 0.35, 0, Math.PI * 2);
+    ctx.arc(bx + proj.width * 0.45, by, tipR, 0, Math.PI * 2);
     ctx.fill();
-    // Brilho no bombom
-    ctx.fillStyle = "#FFF8F060";
+
+    // Contorno escuro — traz o bombom pra frente sobre qualquer fundo
+    ctx.strokeStyle = "#3A2840";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(bx - 1, by - 1, proj.height * 0.28, 0, Math.PI * 2);
+    ctx.arc(bx, by, coreR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Brilho no topo-esquerdo (lustre)
+    ctx.fillStyle = "#FFFFFFB0";
+    ctx.beginPath();
+    ctx.arc(bx - coreR * 0.35, by - coreR * 0.35, coreR * 0.3, 0, Math.PI * 2);
     ctx.fill();
   } else {
     // Projétil inimigo: gota verde (semente cuspida)
@@ -1713,16 +1733,21 @@ function renderZoneTransition(
   ctx: CanvasRenderingContext2D,
   zoneName: string,
   timer: number,
+  isPending: boolean,
+  time: number,
 ) {
   ctx.save();
 
-  // Fade in nos primeiros 30 frames, fade out nos últimos 30
+  // Em modo pending, fica fixo em alpha=1; fora dele usa o fade clássico
   let alpha = 1;
-  if (timer > 90) alpha = (120 - timer) / 30;
-  else if (timer < 30) alpha = timer / 30;
+  if (!isPending) {
+    if (timer > 90) alpha = (120 - timer) / 30;
+    else if (timer < 30) alpha = timer / 30;
+  }
 
-  // Fundo suave cobrindo a tela inteira
-  ctx.fillStyle = `rgba(42, 10, 58, ${0.5 * alpha})`;
+  // Fundo mais opaco quando pending — é um "pause modal" exigindo atenção
+  const bgAlpha = isPending ? 0.72 : 0.5 * alpha;
+  ctx.fillStyle = `rgba(42, 10, 58, ${bgAlpha})`;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   // Placa de confeitaria central
@@ -1839,6 +1864,24 @@ function renderZoneTransition(
     CANVAS_WIDTH / 2,
     plateY + 172,
   );
+
+  // Prompt de continuação — só aparece quando o cartaz aguarda input
+  if (isPending) {
+    const blink = Math.sin(time * 0.08) > 0;
+    if (blink) {
+      ctx.fillStyle = COLORS.magenta;
+      ctx.shadowColor = COLORS.playerGlow;
+      ctx.shadowBlur = 10;
+      ctx.font = "bold 20px 'Fredoka', 'Comic Sans MS', cursive, serif";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "★  Pressione ENTER para continuar  ★",
+        CANVAS_WIDTH / 2,
+        plateY + plateH + 50,
+      );
+      ctx.shadowBlur = 0;
+    }
+  }
 
   ctx.restore();
 }

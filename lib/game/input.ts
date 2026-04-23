@@ -18,6 +18,9 @@ export function createInputState(): InputState {
     shootPressed: false,
     pausePressed: false,
     unpausePressed: false,
+    mouseWorldX: 0,
+    mouseWorldY: 0,
+    shootFromMouse: false,
   };
 }
 
@@ -68,7 +71,10 @@ export function setupInput(input: InputState): () => void {
       if (!pressedKeys.has(e.code)) {
         pressedKeys.add(e.code);
         if (action === "jump") input.jumpPressed = true;
-        if (action === "shoot") input.shootPressed = true;
+        if (action === "shoot") {
+          input.shootPressed = true;
+          input.shootFromMouse = false;
+        }
         if (action === "pause") input.pausePressed = true;
       }
       input[action] = true;
@@ -93,6 +99,7 @@ export function setupInput(input: InputState): () => void {
     if (e.button === 0) {
       input.shoot = true;
       input.shootPressed = true;
+      input.shootFromMouse = true;
     }
   };
 
@@ -146,5 +153,7 @@ export function resetInput(input: InputState) {
   input.shootPressed = false;
   input.pausePressed = false;
   input.unpausePressed = false;
+  input.shootFromMouse = false;
+  // mouseWorldX/Y mantidos para continuidade do cursor
   pressedKeys.clear();
 }

@@ -49,6 +49,8 @@ export function createGameState(): GameState {
     zoneTransitionTimer: 0,
     zoneTransitionName: "",
     damageFlashTimer: 0,
+    announcedZones: [],
+    zoneAnnouncePending: false,
   };
 }
 
@@ -73,6 +75,8 @@ export function resetGame(state: GameState): GameState {
     zoneTransitionTimer: 0,
     zoneTransitionName: "",
     damageFlashTimer: 0,
+    announcedZones: [],
+    zoneAnnouncePending: false,
   };
 }
 
@@ -123,6 +127,23 @@ export function gameUpdate(state: GameState, input: InputState): GameState {
     state.screen = "paused";
     consumePressed(input);
     return state;
+  }
+
+  // Enquanto o cartaz de nova zona está visível, congela entidades e aguarda
+  // o jogador pressionar Enter/Espaço/Pular/Atirar para dispensar.
+  if (state.zoneAnnouncePending) {
+    const dismissed =
+      input.jumpPressed || input.shootPressed || input.pausePressed;
+    if (dismissed) {
+      state.zoneAnnouncePending = false;
+      state.zoneTransitionTimer = 0;
+      consumePressed(input);
+    } else {
+      consumePressed(input);
+      // Apenas tick de tempo para animar o cartaz — nenhuma lógica de gameplay
+      state.time++;
+      return state;
+    }
   }
 
   state.time++;
@@ -189,16 +210,23 @@ export function gameUpdate(state: GameState, input: InputState): GameState {
 
   if (newZone !== state.currentZone) {
     state.currentZone = newZone;
-    state.zoneTransitionTimer = 120; // 2 segundos a 60fps
-    const zoneNames = {
-      streets: "CANDY LAND",
-      ducts: "CANDY WOODS",
-      boss: "QG DAS VERDURAS",
-    };
-    state.zoneTransitionName = zoneNames[newZone];
+    // Só mostra o cartaz se for a primeira vez que o jogador chega nessa zona.
+    // Se ele voltar e entrar de novo, não reabre o anúncio.
+    if (!state.announcedZones.includes(newZone)) {
+      state.announcedZones.push(newZone);
+      const zoneNames = {
+        streets: "CANDY LAND",
+        ducts: "CANDY WOODS",
+        boss: "QG DAS VERDURAS",
+      };
+      state.zoneTransitionName = zoneNames[newZone];
+      state.zoneTransitionTimer = 9999; // permanece até o jogador dispensar
+      state.zoneAnnouncePending = true;
+    }
   }
 
-  if (state.zoneTransitionTimer > 0) {
+  // O timer agora só decrementa fora do modo "announce pending" — gerido acima.
+  if (state.zoneTransitionTimer > 0 && !state.zoneAnnouncePending) {
     state.zoneTransitionTimer--;
   }
 

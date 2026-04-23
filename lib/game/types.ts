@@ -202,6 +202,12 @@ export interface GameState {
   zoneTransitionTimer: number;
   zoneTransitionName: string;
   damageFlashTimer: number;
+  // Zonas que já mostraram o cartaz de boas-vindas — evita repetir se o player
+  // voltar para a zona anterior e entrar novamente.
+  announcedZones: LevelSection[];
+  // Quando true, o jogo pausa entidades e espera o jogador pressionar uma tecla
+  // para dispensar o cartaz da nova zona.
+  zoneAnnouncePending: boolean;
 }
 
 // ---------- Input ----------
@@ -216,4 +222,10 @@ export interface InputState {
   shootPressed: boolean;
   pausePressed: boolean;
   unpausePressed: boolean;
+  // Posição do cursor em coordenadas do mundo (já com offset de câmera aplicado).
+  mouseWorldX: number;
+  mouseWorldY: number;
+  // true se o último tiro foi requisitado via clique do mouse.
+  // O projétil então segue o cursor; tecla de tiro mantém direção horizontal.
+  shootFromMouse: boolean;
 }

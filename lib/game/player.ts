@@ -156,22 +156,49 @@ export function updatePlayer(
     player.shootCooldown = PLAYER_SHOOT_COOLDOWN;
     player.isShooting = true;
 
+    // Origem do projétil — sempre sai do lado correto do player conforme direction
     const bulletX =
       player.direction === "right"
         ? player.x + player.width
         : player.x - BULLET_WIDTH;
     const bulletY = player.y + player.height * 0.35;
 
+    // Vetor de disparo: se foi via mouse, aponta pro cursor; senão, horizontal
+    let vx: number;
+    let vy: number;
+    if (input.shootFromMouse) {
+      const originX = bulletX + BULLET_WIDTH / 2;
+      const originY = bulletY + BULLET_HEIGHT / 2;
+      const dx = input.mouseWorldX - originX;
+      const dy = input.mouseWorldY - originY;
+      const len = Math.hypot(dx, dy);
+      if (len > 0.0001) {
+        vx = (dx / len) * PLAYER_BULLET_SPEED;
+        vy = (dy / len) * PLAYER_BULLET_SPEED;
+        // Alinhar direção do player com o alvo (faz a arte olhar pra lá)
+        player.direction = dx >= 0 ? "right" : "left";
+      } else {
+        vx =
+          player.direction === "right"
+            ? PLAYER_BULLET_SPEED
+            : -PLAYER_BULLET_SPEED;
+        vy = 0;
+      }
+    } else {
+      vx =
+        player.direction === "right"
+          ? PLAYER_BULLET_SPEED
+          : -PLAYER_BULLET_SPEED;
+      vy = 0;
+    }
+
     newProjectile = {
       x: bulletX,
       y: bulletY,
       width: BULLET_WIDTH,
       height: BULLET_HEIGHT,
-      vx:
-        player.direction === "right"
-          ? PLAYER_BULLET_SPEED
-          : -PLAYER_BULLET_SPEED,
-      vy: 0,
+      vx,
+      vy,
       owner: "player",
       damage: PLAYER_BULLET_DAMAGE,
       alive: true,
