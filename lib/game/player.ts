@@ -24,7 +24,17 @@ import {
   COLORS,
 } from "./constants";
 import { aabb, isLandingOnTop } from "./collisions";
-import { playJumpSound, playShootSound, playHitSound } from "./audio";
+import {
+  playJumpSound,
+  playShootSound,
+  playHitSound,
+  playHealthPickupSound,
+  playAmmoPickupSound,
+  playShieldBuffSound,
+  playMilkshakeBuffSound,
+  playWeaponUnlockSound,
+  playCollectSound,
+} from "./audio";
 import { createExplosionParticles } from "./particles";
 import { shakeCamera } from "./camera";
 
@@ -278,6 +288,14 @@ export function updatePlayer(
             player.maxHealth,
             player.health + collectible.value,
           );
+          playHealthPickupSound();
+          state.floatingMessages.push({
+            text: "+1 DOCURA",
+            color: "#FF8FB8",
+            life: 90,
+            maxLife: 90,
+            yOffset: -100,
+          });
           break;
         case "ammo":
           // GDD §5.3: capacidade limitada por maxAmmo (30 até Z2, 60 na Z3)
@@ -285,21 +303,54 @@ export function updatePlayer(
             player.maxAmmo,
             player.ammo + collectible.value,
           );
+          playAmmoPickupSound();
           break;
         case "data_chip":
           player.score += collectible.value;
+          playCollectSound();
           break;
         case "shield_buff":
           // Bolo: escudo que absorve o próximo hit (GDD §2.4)
           player.shieldActive = true;
+          playShieldBuffSound();
+          state.floatingMessages.push({
+            text: "★ ESCUDO DE BOLO ATIVO! ★",
+            color: "#FF8FB8",
+            life: 150,
+            maxLife: 150,
+            yOffset: -80,
+          });
           break;
         case "milkshake_buff":
           // Milkshake: munição infinita por 8s — 8s * 60fps = 480 frames
           player.milkshakeTimer = 480;
+          playMilkshakeBuffSound();
+          state.floatingMessages.push({
+            text: "★ MUNICAO INFINITA POR 8s! ★",
+            color: "#FFE89B",
+            life: 150,
+            maxLife: 150,
+            yOffset: -80,
+          });
           break;
         case "weapon_unlock":
           // Lançador de Bombom: desbloqueia tiro ao final da Zona 1
           player.canShoot = true;
+          playWeaponUnlockSound();
+          state.floatingMessages.push({
+            text: "★ LANCADOR DE BOMBOM DESBLOQUEADO! ★",
+            color: "#FFB347",
+            life: 240,
+            maxLife: 240,
+            yOffset: -90,
+          });
+          state.floatingMessages.push({
+            text: "Clique do mouse para mirar, J para tiro reto",
+            color: "#FFF8F0",
+            life: 240,
+            maxLife: 240,
+            yOffset: -50,
+          });
           break;
       }
       // Particles are spawned elsewhere

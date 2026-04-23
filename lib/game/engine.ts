@@ -51,6 +51,7 @@ export function createGameState(): GameState {
     damageFlashTimer: 0,
     announcedZones: [],
     zoneAnnouncePending: false,
+    floatingMessages: [],
   };
 }
 
@@ -77,6 +78,7 @@ export function resetGame(state: GameState): GameState {
     damageFlashTimer: 0,
     announcedZones: [],
     zoneAnnouncePending: false,
+    floatingMessages: [],
   };
 }
 
@@ -134,6 +136,11 @@ export function gameUpdate(state: GameState, input: InputState): GameState {
   if (!state.announcedZones) state.announcedZones = [];
   if (state.zoneAnnouncePending === undefined)
     state.zoneAnnouncePending = false;
+  if (!state.floatingMessages) state.floatingMessages = [];
+
+  // Tick + cleanup das mensagens flutuantes
+  for (const msg of state.floatingMessages) msg.life--;
+  state.floatingMessages = state.floatingMessages.filter((m) => m.life > 0);
 
   // Enquanto o cartaz de nova zona está visível, congela entidades e aguarda
   // o jogador pressionar Enter/Espaço/Pular/Atirar para dispensar.
@@ -221,6 +228,13 @@ export function gameUpdate(state: GameState, input: InputState): GameState {
     // capacidade máxima de 30 para 60. Preserva o estoque atual.
     if (newZone === "boss" && state.player.maxAmmo < 60) {
       state.player.maxAmmo = 60;
+      state.floatingMessages.push({
+        text: "★ BOLSA REFORCADA — 60 BOMBONS! ★",
+        color: "#FFB347",
+        life: 180,
+        maxLife: 180,
+        yOffset: -60,
+      });
     }
 
     // Só mostra o cartaz se for a primeira vez que o jogador chega nessa zona.

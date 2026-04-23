@@ -135,8 +135,45 @@ export function playEnemyDeathSound() {
 }
 
 export function playCollectSound() {
+  // Genérico: jingle ascendente de 2 notas (data_chip / score)
   playTone(600, 0.1, "sine", 0.06, 900);
   setTimeout(() => playTone(900, 0.1, "sine", 0.05, 1200), 60);
+}
+
+// Cura — 3 notas ascendentes em maior, soa "vida restaurada"
+export function playHealthPickupSound() {
+  playTone(523, 0.08, "triangle", 0.06); // C5
+  setTimeout(() => playTone(659, 0.08, "triangle", 0.06), 60); // E5
+  setTimeout(() => playTone(784, 0.12, "triangle", 0.07), 120); // G5
+}
+
+// Munição — duplo "tin" curto
+export function playAmmoPickupSound() {
+  playTone(880, 0.05, "square", 0.04); // A5
+  setTimeout(() => playTone(1175, 0.07, "triangle", 0.05), 50); // D6
+}
+
+// Buff de escudo — acorde maior triádico (poderoso)
+export function playShieldBuffSound() {
+  playTone(392, 0.25, "triangle", 0.06); // G4
+  playTone(523, 0.25, "triangle", 0.05); // C5
+  playTone(659, 0.25, "triangle", 0.05); // E5
+}
+
+// Buff de munição infinita — fanfarra rápida ascendente
+export function playMilkshakeBuffSound() {
+  const notes = [523, 659, 784, 1047, 1319]; // C5 E5 G5 C6 E6
+  notes.forEach((f, i) => {
+    setTimeout(() => playTone(f, 0.1, "triangle", 0.06), i * 50);
+  });
+}
+
+// Lançador de Bombom desbloqueado — trompete heroico
+export function playWeaponUnlockSound() {
+  playTone(330, 0.15, "sawtooth", 0.05); // E4
+  setTimeout(() => playTone(440, 0.15, "sawtooth", 0.05), 100); // A4
+  setTimeout(() => playTone(523, 0.3, "sawtooth", 0.07), 200); // C5
+  setTimeout(() => playTone(784, 0.4, "triangle", 0.08), 320); // G5
 }
 
 export function playBossHitSound() {

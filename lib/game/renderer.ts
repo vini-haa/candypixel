@@ -10,6 +10,7 @@ import type {
   Projectile,
   Collectible,
   BackgroundBuilding,
+  FloatingMessage,
 } from "./types";
 import {
   CANVAS_WIDTH,
@@ -81,6 +82,11 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
 
   // HUD (drawn last, no camera offset)
   renderHUD(ctx, state);
+
+  // Mensagens flutuantes (above HUD, below pause/transition)
+  if (state.floatingMessages && state.floatingMessages.length > 0) {
+    renderFloatingMessages(ctx, state.floatingMessages);
+  }
 
   // Damage flash overlay
   if (state.damageFlashTimer > 0) {
@@ -2135,5 +2141,67 @@ function renderPauseOverlay(ctx: CanvasRenderingContext2D) {
     CANVAS_HEIGHT / 2 + 56,
   );
 
+  ctx.restore();
+}
+
+// ---------- Mensagens flutuantes (toasts de feedback) ----------
+function renderFloatingMessages(
+  ctx: CanvasRenderingContext2D,
+  messages: FloatingMessage[],
+) {
+  ctx.save();
+  // Empilha mensagens verticalmente conforme aparecem
+  let stackOffset = 0;
+  for (const msg of messages) {
+    const fade = msg.life / msg.maxLife;
+    // Easing: aparece rápido nos primeiros 15%, fica visível, some nos últimos 30%
+    let alpha = 1;
+    if (fade > 0.85) alpha = (1 - fade) / 0.15; // fade in
+    else if (fade < 0.3) alpha = fade / 0.3; // fade out
+
+    // Posição: centro horizontal, com offset vertical configurado + stack
+    const baseY = CANVAS_HEIGHT / 2 + (msg.yOffset ?? -120);
+    // Animação de slide up suave conforme decai (max 12px de movimento)
+    const slideUp = (1 - fade) * 12;
+    const y = baseY - slideUp + stackOffset;
+
+    ctx.globalAlpha = alpha;
+
+    // Pill de fundo escura para legibilidade
+    ctx.font = "bold 22px 'Fredoka', 'Comic Sans MS', cursive, serif";
+    const metrics = ctx.measureText(msg.text);
+    const padX = 18;
+    const padY = 10;
+    const w = metrics.width + padX * 2;
+    const h = 36;
+    const x = CANVAS_WIDTH / 2 - w / 2;
+
+    // Fundo
+    ctx.fillStyle = "rgba(58, 40, 64, 0.85)";
+    ctx.shadowColor = msg.color;
+    ctx.shadowBlur = 20 * alpha;
+    ctx.beginPath();
+    ctx.roundRect(x, y - h + padY, w, h, 18);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Borda colorida
+    ctx.strokeStyle = msg.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x, y - h + padY, w, h, 18);
+    ctx.stroke();
+
+    // Texto principal com sombra
+    ctx.fillStyle = msg.color;
+    ctx.shadowColor = msg.color;
+    ctx.shadowBlur = 8 * alpha;
+    ctx.textAlign = "center";
+    ctx.fillText(msg.text, CANVAS_WIDTH / 2, y);
+    ctx.shadowBlur = 0;
+
+    // Avança a próxima mensagem para baixo
+    stackOffset += 44;
+  }
   ctx.restore();
 }

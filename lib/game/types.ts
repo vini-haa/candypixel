@@ -225,6 +225,18 @@ export interface GameState {
   // Quando true, o jogo pausa entidades e espera o jogador pressionar uma tecla
   // para dispensar o cartaz da nova zona.
   zoneAnnouncePending: boolean;
+  // Mensagens flutuantes de feedback (ex: "ARMA DESBLOQUEADA!", buffs ativos)
+  floatingMessages: FloatingMessage[];
+}
+
+export interface FloatingMessage {
+  text: string;
+  color: string;
+  // Frames restantes / total — usado para fade in/out
+  life: number;
+  maxLife: number;
+  // Posição relativa ao centro da tela; se omitido, fica no topo
+  yOffset?: number;
 }
 
 // ---------- Input ----------
