@@ -131,6 +131,19 @@ export function generateLevel(): LevelData {
     });
   }
 
+  // GDD §5.3: "Lançador de Bombom" — abandonado por aliado caído no fim da Zona 1.
+  // Desbloqueia o sistema de tiro antes do player entrar em Candy Woods.
+  collectibles.push({
+    x: STREETS_WIDTH - 140,
+    y: GROUND_Y - 80,
+    width: COLLECTIBLE_SIZE * 1.6,
+    height: COLLECTIBLE_SIZE * 1.6,
+    type: "weapon_unlock",
+    collected: false,
+    animTimer: 0,
+    value: 0,
+  });
+
   // ========================
   // SECTION 2 - CANDY WOODS (Challenge)
   // ========================
@@ -325,6 +338,30 @@ export function generateLevel(): LevelData {
     });
   }
 
+  // GDD §2.4: Buffs temporários estratégicos em Candy Woods
+  // Bolo (Escudo) — absorve 1 hit
+  collectibles.push({
+    x: ductsStart + 900,
+    y: GROUND_Y - 220,
+    width: COLLECTIBLE_SIZE * 1.3,
+    height: COLLECTIBLE_SIZE * 1.3,
+    type: "shield_buff",
+    collected: false,
+    animTimer: 0,
+    value: 0,
+  });
+  // Milkshake (Sobrecarga) — munição infinita por 8s
+  collectibles.push({
+    x: ductsStart + 2300,
+    y: GROUND_Y - 180,
+    width: COLLECTIBLE_SIZE * 1.3,
+    height: COLLECTIBLE_SIZE * 1.3,
+    type: "milkshake_buff",
+    collected: false,
+    animTimer: 0,
+    value: 0,
+  });
+
   // ========================
   // SECTION 3 - QG DAS VERDURAS (Boss Arena)
   // ========================
@@ -385,6 +422,17 @@ export function generateLevel(): LevelData {
     collected: false,
     animTimer: 0,
     value: AMMO_RESTORE,
+  });
+  // Buff estratégico pré-boss: Bolo para absorver um dos ataques do Alface Gigante
+  collectibles.push({
+    x: bossStart + BOSS_ARENA_WIDTH / 2,
+    y: GROUND_Y - 220,
+    width: COLLECTIBLE_SIZE * 1.3,
+    height: COLLECTIBLE_SIZE * 1.3,
+    type: "shield_buff",
+    collected: false,
+    animTimer: 0,
+    value: 0,
   });
 
   // Boss

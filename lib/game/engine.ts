@@ -216,6 +216,13 @@ export function gameUpdate(state: GameState, input: InputState): GameState {
 
   if (newZone !== state.currentZone) {
     state.currentZone = newZone;
+
+    // GDD §5.3: ao entrar na Zona 3, "Bolsa de Bombons Reforçada" expande a
+    // capacidade máxima de 30 para 60. Preserva o estoque atual.
+    if (newZone === "boss" && state.player.maxAmmo < 60) {
+      state.player.maxAmmo = 60;
+    }
+
     // Só mostra o cartaz se for a primeira vez que o jogador chega nessa zona.
     // Se ele voltar e entrar de novo, não reabre o anúncio.
     if (!state.announcedZones.includes(newZone)) {

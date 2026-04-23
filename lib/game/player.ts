@@ -40,6 +40,7 @@ export function createPlayer(x: number, y: number): Player {
     health: PLAYER_MAX_HEALTH,
     maxHealth: PLAYER_MAX_HEALTH,
     ammo: PLAYER_START_AMMO,
+    maxAmmo: PLAYER_START_AMMO,
     score: 0,
     isGrounded: false,
     isJumping: false,
@@ -50,6 +51,9 @@ export function createPlayer(x: number, y: number): Player {
     animFrame: 0,
     animTimer: 0,
     alive: true,
+    canShoot: false,
+    shieldActive: false,
+    milkshakeTimer: 0,
   };
 }
 
@@ -151,8 +155,18 @@ export function updatePlayer(
   let newProjectile: Projectile | null = null;
   if (player.shootCooldown > 0) player.shootCooldown--;
 
-  if (input.shootPressed && player.shootCooldown <= 0 && player.ammo > 0) {
-    player.ammo--;
+  // Tick dos buffs temporais
+  if (player.milkshakeTimer > 0) player.milkshakeTimer--;
+
+  // Desbloqueio do tiro só acontece depois do Lançador de Bombom (GDD §5.3)
+  const shootAllowed =
+    player.canShoot &&
+    input.shootPressed &&
+    player.shootCooldown <= 0 &&
+    (player.ammo > 0 || player.milkshakeTimer > 0);
+  if (shootAllowed) {
+    // Milkshake: munição infinita por 8s — não decrementa ammo
+    if (player.milkshakeTimer <= 0) player.ammo--;
     player.shootCooldown = PLAYER_SHOOT_COOLDOWN;
     player.isShooting = true;
 
@@ -266,10 +280,26 @@ export function updatePlayer(
           );
           break;
         case "ammo":
-          player.ammo += collectible.value;
+          // GDD §5.3: capacidade limitada por maxAmmo (30 até Z2, 60 na Z3)
+          player.ammo = Math.min(
+            player.maxAmmo,
+            player.ammo + collectible.value,
+          );
           break;
         case "data_chip":
           player.score += collectible.value;
+          break;
+        case "shield_buff":
+          // Bolo: escudo que absorve o próximo hit (GDD §2.4)
+          player.shieldActive = true;
+          break;
+        case "milkshake_buff":
+          // Milkshake: munição infinita por 8s — 8s * 60fps = 480 frames
+          player.milkshakeTimer = 480;
+          break;
+        case "weapon_unlock":
+          // Lançador de Bombom: desbloqueia tiro ao final da Zona 1
+          player.canShoot = true;
           break;
       }
       // Particles are spawned elsewhere
@@ -281,6 +311,25 @@ export function updatePlayer(
 
 export function damagePlayer(player: Player, damage: number, state: GameState) {
   if (player.invincible || !player.alive) return;
+
+  // GDD §2.4: Bolo absorve o próximo hit — escudo consome sem reduzir Doçura
+  if (player.shieldActive) {
+    player.shieldActive = false;
+    player.invincible = true;
+    player.invincibleTimer = PLAYER_INVINCIBLE_TIME;
+    playHitSound();
+    shakeCamera(state.camera, 2, 6);
+    // Partículas rosa do escudo estourando
+    state.particles.push(
+      ...createExplosionParticles(
+        player.x + player.width / 2,
+        player.y + player.height / 2,
+        "#FFB8D0",
+        12,
+      ),
+    );
+    return;
+  }
 
   player.health -= damage;
   player.invincible = true;

@@ -490,6 +490,58 @@ function renderPlayer(
   const facingRight = player.direction === "right";
   const pw = player.width;
   const ph = player.height;
+  const cx = x + pw / 2;
+  const cy = y + ph / 2;
+
+  // ===== Aura do escudo (Bolo) — bolha rosa pulsante rodeando o player =====
+  if (player.shieldActive) {
+    const pulseR = Math.max(pw, ph) * 0.75 + Math.sin(time * 0.1) * 4;
+    ctx.save();
+    ctx.strokeStyle = "#FFB8D0";
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = "#FF5FA8";
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = "#FFB8D030";
+    ctx.beginPath();
+    ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Brilho no topo-esquerdo da bolha
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#FFFFFF90";
+    ctx.beginPath();
+    ctx.arc(
+      cx - pulseR * 0.4,
+      cy - pulseR * 0.5,
+      pulseR * 0.18,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ===== Aura do Milkshake — 6 gotas brancas orbitando o player =====
+  if (player.milkshakeTimer > 0) {
+    ctx.save();
+    const orbit = Math.max(pw, ph) * 0.8;
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2 + time * 0.05;
+      const ox = cx + Math.cos(ang) * orbit;
+      const oy = cy + Math.sin(ang) * orbit * 0.7;
+      ctx.fillStyle = "#FFF8F0";
+      ctx.shadowColor = "#FFB8D0";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(ox, oy, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Pisca quando faltam menos de 2s (120 frames)
+    if (player.milkshakeTimer < 120 && Math.floor(time * 0.3) % 2 === 0) {
+      ctx.globalAlpha = 0.4;
+    }
+    ctx.restore();
+  }
 
   // === Forminha do cupcake (trapézio invertido, parte de baixo) ===
   const cupTopW = pw * 0.75;
@@ -1357,6 +1409,123 @@ function renderCollectible(
       Math.PI * 2,
     );
     ctx.fill();
+  } else if (col.type === "shield_buff") {
+    // Bolo de aniversário (Escudo) — base marrom com glacê rosa em camadas + velinha
+    const glow = Math.sin(time * 0.05) * 0.3 + 0.7;
+    ctx.globalAlpha = glow;
+    ctx.shadowColor = "#FF8FB8";
+    ctx.shadowBlur = 18;
+
+    // Base (bolo marrom) — trapézio
+    ctx.fillStyle = "#D4956B";
+    ctx.fillRect(cx - s * 1.1, cy + s * 0.2, s * 2.2, s * 0.7);
+    // Cobertura rosa (camada superior)
+    ctx.fillStyle = "#FFB8D0";
+    ctx.fillRect(cx - s * 1.0, cy - s * 0.2, s * 2.0, s * 0.5);
+    // Topo branco (glacê escorrendo)
+    ctx.fillStyle = "#FFF8F0";
+    ctx.fillRect(cx - s * 1.0, cy - s * 0.35, s * 2.0, s * 0.2);
+    // Pinguinhos rosa no topo
+    ctx.fillStyle = "#FF5FA8";
+    for (let i = 0; i < 4; i++) {
+      const px = cx - s * 0.85 + i * s * 0.6;
+      ctx.beginPath();
+      ctx.arc(px, cy - s * 0.15, s * 0.08, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Velinha
+    ctx.fillStyle = "#FFF8F0";
+    ctx.fillRect(cx - 1, cy - s * 0.85, 2, s * 0.5);
+    // Chama
+    ctx.fillStyle = "#FFE89B";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - s * 0.95, 3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  } else if (col.type === "milkshake_buff") {
+    // Milkshake — copo com canudo e chantilly
+    const glow = Math.sin(time * 0.05) * 0.3 + 0.7;
+    ctx.globalAlpha = glow;
+    ctx.shadowColor = "#FFB8D0";
+    ctx.shadowBlur = 16;
+
+    // Copo (trapézio invertido branco translúcido)
+    ctx.fillStyle = "#FFF8F0EE";
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.85, cy - s * 0.3);
+    ctx.lineTo(cx + s * 0.85, cy - s * 0.3);
+    ctx.lineTo(cx + s * 0.65, cy + s * 0.95);
+    ctx.lineTo(cx - s * 0.65, cy + s * 0.95);
+    ctx.closePath();
+    ctx.fill();
+    // Líquido rosa dentro
+    ctx.fillStyle = "#FFB8D0";
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.75, cy - s * 0.15);
+    ctx.lineTo(cx + s * 0.75, cy - s * 0.15);
+    ctx.lineTo(cx + s * 0.6, cy + s * 0.85);
+    ctx.lineTo(cx - s * 0.6, cy + s * 0.85);
+    ctx.closePath();
+    ctx.fill();
+    // Chantilly em cima (3 bolhas)
+    ctx.fillStyle = "#FFF8F0";
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.4, cy - s * 0.35, s * 0.35, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.05, cy - s * 0.55, s * 0.4, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.45, cy - s * 0.35, s * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Cereja no topo
+    ctx.fillStyle = "#E85858";
+    ctx.beginPath();
+    ctx.arc(cx + s * 0.05, cy - s * 0.8, s * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Canudo
+    ctx.strokeStyle = "#FF5FA8";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx + s * 0.6, cy - s * 0.6);
+    ctx.lineTo(cx + s * 0.3, cy - s * 0.1);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  } else if (col.type === "weapon_unlock") {
+    // Lançador de Bombom — ícone de arma candy (cano + cabo + brilho pulsante)
+    const glow = Math.sin(time * 0.08) * 0.4 + 0.6;
+    ctx.shadowColor = "#FFB347";
+    ctx.shadowBlur = 22 * glow;
+
+    // Cabo (marrom caramelo)
+    ctx.fillStyle = "#D4956B";
+    ctx.fillRect(cx - s * 0.8, cy - s * 0.15, s * 0.6, s * 0.8);
+    // Cano (cinza metálico rosa)
+    ctx.fillStyle = "#FF8FB8";
+    ctx.fillRect(cx - s * 0.8, cy - s * 0.45, s * 1.6, s * 0.35);
+    // Boca do cano (dourado)
+    ctx.fillStyle = "#FFB347";
+    ctx.fillRect(cx + s * 0.65, cy - s * 0.5, s * 0.25, s * 0.45);
+    // Gatilho
+    ctx.fillStyle = "#3A2840";
+    ctx.fillRect(cx - s * 0.25, cy + s * 0.1, s * 0.12, s * 0.3);
+    // Bombom saindo da boca (animado)
+    const bx = cx + s * 1.0 + Math.sin(time * 0.2) * 3;
+    ctx.fillStyle = "#E8117F";
+    ctx.beginPath();
+    ctx.arc(bx, cy - s * 0.3, s * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    // Raios de brilho
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#FFE89B";
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2 + time * 0.02;
+      const r1 = s * 1.3 + Math.sin(time * 0.1 + i) * 2;
+      const r2 = s * 1.55 + Math.sin(time * 0.1 + i) * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+      ctx.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2);
+      ctx.stroke();
+    }
   } else {
     // data_chip: pirulito (círculo lavanda no palitinho)
     // Palitinho
@@ -1442,44 +1611,90 @@ function renderHUD(ctx: CanvasRenderingContext2D, state: GameState) {
     }
   }
 
-  // === Munição: ícone de bombom + número ===
+  // Antes de pegar o Lançador de Bombom, mostra "SEM ARMA" em vez do contador
+  if (!player.canShoot) {
+    ctx.save();
+    ctx.fillStyle = COLORS.darkPurple + "AA";
+    ctx.font = "italic bold 13px 'Fredoka', 'Comic Sans MS', cursive, serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Sem arma — ache o Lancador!", 16, 60);
+    ctx.restore();
+    // Pula render do contador e barra — sai cedo do bloco
+  }
+  // === Munição: ícone de bombom + número === (só aparece depois de canShoot)
   const ammoLow = player.ammo <= 3;
   const ammoBlink = ammoLow && Math.floor(state.time * 0.15) % 2 === 0;
   const ammoColor = ammoBlink ? COLORS.red : COLORS.hudAmmo;
+  if (player.canShoot) {
+    // Ícone de bombom pequeno
+    ctx.fillStyle = ammoColor;
+    if (ammoBlink) {
+      ctx.shadowColor = COLORS.red;
+      ctx.shadowBlur = 8;
+    }
+    ctx.beginPath();
+    ctx.arc(16 + 5, 54, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(16 - 4, 54, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(16 + 14, 54, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(16 - 1, 49, 12, 10);
+    ctx.shadowBlur = 0;
 
-  // Ícone de bombom pequeno
-  ctx.fillStyle = ammoColor;
-  if (ammoBlink) {
-    ctx.shadowColor = COLORS.red;
-    ctx.shadowBlur = 8;
+    ctx.fillStyle = ammoColor;
+    ctx.font = "bold 14px 'Fredoka', 'Comic Sans MS', cursive, serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`${player.ammo}`, 36, 59);
+
+    // Barra de munição
+    ctx.fillStyle = "#C8A4B830";
+    ctx.beginPath();
+    ctx.roundRect(16, 64, 100, 4, 2);
+    ctx.fill();
+    ctx.fillStyle = ammoLow ? COLORS.red : COLORS.hudAmmo;
+    const ammoRatio = Math.min(1, player.ammo / Math.max(1, player.maxAmmo));
+    ctx.beginPath();
+    ctx.roundRect(16, 64, 100 * ammoRatio, 4, 2);
+    ctx.fill();
+
+    // Indicador Milkshake (munição infinita 8s) — sobrescreve número da munição
+    if (player.milkshakeTimer > 0) {
+      ctx.fillStyle = "#FFF8F0";
+      ctx.shadowColor = "#FFB8D0";
+      ctx.shadowBlur = 8;
+      ctx.font = "bold 14px 'Fredoka', 'Comic Sans MS', cursive, serif";
+      ctx.textAlign = "left";
+      const secs = Math.ceil(player.milkshakeTimer / 60);
+      ctx.fillText(`∞ (${secs}s)`, 36, 59);
+      ctx.shadowBlur = 0;
+    }
   }
-  ctx.beginPath();
-  ctx.arc(16 + 5, 54, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(16 - 4, 54, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(16 + 14, 54, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillRect(16 - 1, 49, 12, 10);
-  ctx.shadowBlur = 0;
 
-  ctx.fillStyle = ammoColor;
-  ctx.font = "bold 14px 'Fredoka', 'Comic Sans MS', cursive, serif";
-  ctx.textAlign = "left";
-  ctx.fillText(`${player.ammo}`, 36, 59);
-
-  // Barra de munição
-  ctx.fillStyle = "#C8A4B830";
-  ctx.beginPath();
-  ctx.roundRect(16, 64, 100, 4, 2);
-  ctx.fill();
-  ctx.fillStyle = ammoLow ? COLORS.red : COLORS.hudAmmo;
-  const ammoRatio = Math.min(1, player.ammo / PLAYER_START_AMMO);
-  ctx.beginPath();
-  ctx.roundRect(16, 64, 100 * ammoRatio, 4, 2);
-  ctx.fill();
+  // Ícone de escudo ativo na HUD (quando Bolo foi coletado)
+  if (player.shieldActive) {
+    const sx = 130;
+    const sy = 56;
+    ctx.save();
+    ctx.shadowColor = "#FF5FA8";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#FFB8D0";
+    ctx.beginPath();
+    ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Símbolo de escudo
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 11px 'Fredoka', 'Comic Sans MS', cursive, serif";
+    ctx.textAlign = "center";
+    ctx.fillText("S", sx, sy + 4);
+    ctx.restore();
+  }
 
   // === Score: número grande em fonte arredondada ===
   ctx.fillStyle = COLORS.hudScore;
