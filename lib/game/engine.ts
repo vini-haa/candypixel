@@ -129,6 +129,12 @@ export function gameUpdate(state: GameState, input: InputState): GameState {
     return state;
   }
 
+  // Migração defensiva: se o state foi criado por uma versão antiga (via HMR
+  // em dev ou save antigo), os campos novos podem estar indefinidos.
+  if (!state.announcedZones) state.announcedZones = [];
+  if (state.zoneAnnouncePending === undefined)
+    state.zoneAnnouncePending = false;
+
   // Enquanto o cartaz de nova zona está visível, congela entidades e aguarda
   // o jogador pressionar Enter/Espaço/Pular/Atirar para dispensar.
   if (state.zoneAnnouncePending) {

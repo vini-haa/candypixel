@@ -13,8 +13,8 @@ export const MAX_FALL_SPEED = 12;
 // Player
 export const PLAYER_WIDTH = 32;
 export const PLAYER_HEIGHT = 48;
-export const PLAYER_SPEED = 4.5;
-export const PLAYER_JUMP_FORCE = -12;
+export const PLAYER_SPEED = 5.5;
+export const PLAYER_JUMP_FORCE = -13;
 export const PLAYER_MAX_HEALTH = 5;
 export const PLAYER_START_AMMO = 30; // GDD § 2.3: munição inicial (Bombons)
 export const PLAYER_SHOOT_COOLDOWN = 12; // frames
