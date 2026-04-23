@@ -1023,7 +1023,7 @@ function renderBoss(
     const textAlpha = 0.75 + Math.sin(time * 0.15) * 0.25;
     ctx.save();
     ctx.globalAlpha = textAlpha;
-    ctx.font = "bold 13px monospace";
+    ctx.font = "bold 14px 'Fredoka', 'Comic Sans MS', cursive, serif";
     ctx.textAlign = "center";
     ctx.strokeStyle = "#7B1A1A";
     ctx.lineWidth = 3;
@@ -1738,11 +1738,13 @@ function renderZoneTransition(
 ) {
   ctx.save();
 
-  // Em modo pending, fica fixo em alpha=1; fora dele usa o fade clássico
+  // Em modo pending, fica fixo em alpha=1; fora dele usa o fade clássico.
+  // Clamp [0,1] para prevenir valores negativos se timer estiver fora da faixa.
   let alpha = 1;
   if (!isPending) {
     if (timer > 90) alpha = (120 - timer) / 30;
     else if (timer < 30) alpha = timer / 30;
+    alpha = Math.max(0, Math.min(1, alpha));
   }
 
   // Fundo mais opaco quando pending — é um "pause modal" exigindo atenção

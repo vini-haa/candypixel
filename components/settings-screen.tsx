@@ -160,11 +160,13 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
       }
 
       if (item.section === "volume" && item.volumeType && hb.isVolumeBar) {
-        // Converte X do clique em valor 0-100 relativo à faixa útil da barra
+        // Hitbox inclui 60px extras do rótulo %; só a faixa útil da barra
+        // (primeiros 340px) vale para o cálculo do valor.
+        const BAR_WIDTH = 340;
         const barStart = hb.x;
-        const barEnd = hb.x + 340; // largura fixa da barra (sem o rótulo %)
+        const barEnd = hb.x + BAR_WIDTH;
         const clamped = Math.max(barStart, Math.min(x, barEnd));
-        const ratio = (clamped - barStart) / (barEnd - barStart);
+        const ratio = (clamped - barStart) / BAR_WIDTH;
         const newVal = Math.round(ratio * 100);
         if (item.volumeType === "music") {
           setMusicVolume(newVal);
@@ -723,10 +725,10 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
           const newVal = Math.max(0, current - step);
           if (item.volumeType === "music") {
             setMusicVolume(newVal);
-            setSettings({ ...settings, musicVolume: newVal });
+            updateAndSave({ ...settings, musicVolume: newVal });
           } else {
             setSfxVolume(newVal);
-            setSettings({ ...settings, sfxVolume: newVal });
+            updateAndSave({ ...settings, sfxVolume: newVal });
           }
         }
         if (e.code === "ArrowRight" || e.code === "KeyD") {
@@ -738,10 +740,10 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
           const newVal = Math.min(100, current + step);
           if (item.volumeType === "music") {
             setMusicVolume(newVal);
-            setSettings({ ...settings, musicVolume: newVal });
+            updateAndSave({ ...settings, musicVolume: newVal });
           } else {
             setSfxVolume(newVal);
-            setSettings({ ...settings, sfxVolume: newVal });
+            updateAndSave({ ...settings, sfxVolume: newVal });
           }
         }
       }
